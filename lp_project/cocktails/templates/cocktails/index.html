@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Cocktails</title>
+</head>
+<body>
+    <h1>Cocktails</h1>
+    <div id="cocktails"></div>
+    {% if bartender %}
+        <p><a href = "{% url 'cocktail_creation' %}">Create a new cocktail</a></p>
+    {% endif %}
+    <div style="margin-top: 20px">
+        <a href = "{% url 'logout' %}">Logout</a>
+    </div>
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script>
+            jQuery(document).ready(function(){
+                jQuery.ajax({
+                    url: "{% url 'get_all_cocktails' %}",
+                    type: "GET",
+                    dataType: "json",
+                    success: function(response){
+                        const data = JSON.parse(response);
+                        const div = document.getElementById('cocktails');
+                        const cocktailList = document.createElement('ul');
+                        jQuery.each(data,function(index, cocktail){
+                            const cocktailLine = document.createElement('li');
+                            cocktailLine.setAttribute('id', 'cocktail_' + index);
+                            cocktailLine.index = index;
+                            cocktailLine.ingredients = cocktail.fields.ingredients;
+                            cocktailLine.innerHTML = cocktail.fields.name;
+                            cocktailLine.addEventListener('click',cocktailClick);
+                            cocktailList.append(cocktailLine);
+                        });
+                        div.append(cocktailList);
+                    }
+                });
+            });
+
+            //this function will be used to handle clicks on cocktails
+            function cocktailClick(event){
+                const ingredientList = document.createElement('ul');
+                ingredientList.setAttribute('id', 'ingredientList_' + event.currentTarget.index);
+                for(let ingredient of event.currentTarget.ingredients){
+                    jQuery.ajax({
+                        url:"{% url 'get_ingredient' ingredient|default:0 %}".replace('0', ingredient),
+                        type: "GET",
+                        dataType: "json",
+                        success: function(response){
+                            let ingredient_data = JSON.parse(response);
+                            ingredient_data = ingredient_data[0];
+                            const ingredientLine = document.createElement('li');
+                            ingredientLine.setAttribute('id', 'ingredient_' + ingredient);
+                            const ingredientLink = document.createElement('a');
+                            ingredientLink.setAttribute('href',
+                                "{% url 'ingredient_detail' ingredient|default:0 %}".replace(
+                                    '0',ingredient)
+                                );
+                            ingredientLink.innerHTML = ingredient_data.fields.name;
+                            ingredientLine.append(ingredientLink);
+                            jQuery.ajax({
+                                url:"{% url 'get_category' category_id|default:0%}".replace('0',
+                                    ingredient_data.fields.category),
+                                type: "GET",
+                                dataType: "json",
+                                success: function(response){
+                                    let category_data = JSON.parse(response);
+                                    category_data = category_data[0];
+                                    ingredientLine.innerHTML += ": " + category_data.fields.name;
+                                }
+                            })
+                            ingredientList.append(ingredientLine);
+                        }
+                    });
+                }
+                jQuery(ingredientList).insertAfter(event.currentTarget);
+                event.currentTarget.removeEventListener('click', cocktailClick);
+                event.currentTarget.addEventListener('click', cocktailSecondClick);
+            }
+
+            //this function will be used to handle clicks on cocktails that have already been clicked
+            function cocktailSecondClick(event){
+                const ingredientList = document.getElementById('ingredientList_' + event.currentTarget.index);
+                ingredientList.remove();
+                event.currentTarget.removeEventListener('click', cocktailSecondClick);
+                event.currentTarget.addEventListener('click', cocktailClick);
+            }
+        </script>
+</body>
+</html>
+
+
+
+

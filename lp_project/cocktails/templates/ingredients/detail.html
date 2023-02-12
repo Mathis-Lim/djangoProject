@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ ingredient.name }}</title>
+</head>
+<body>
+    <h1>{{ ingredient.name }}</h1>
+    {% if ingredient.category%}
+        <p>{{ ingredient }} is a {{ ingredient.category }}</p>
+    {% else %}
+        <p><i>Category not available</i></p>
+    {% endif %}
+    <h2>Used in :</h2>
+    {% if cocktails_used_in %}
+        <ul>
+        {% for cocktail in cocktails_used_in %}
+            <li><a href = "{% url 'cocktail_detail' cocktail.id %}">{{ cocktail.name }}</a></li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        {{ ingredient }} is not used in any cocktails
+    {% endif %}
+</body>
+<footer style="margin-top:10px">
+    <a href ={% url 'index' %}>Back to homepage</a>
+</footer>
+</html>
